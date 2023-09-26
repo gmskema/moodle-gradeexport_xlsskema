@@ -79,11 +79,9 @@ class grade_export_xlsskema extends grade_export {
         }
         // Last downloaded column header.
         $myxls->write_string(0, $pos++, get_string('timeexported', 'gradeexport_xlsskema'));
-
-        $myxls->write_string(0, $pos++, get_string('courseidnum', 'gradeexport_xlsskema'));
         $myxls->write_string(0, $pos++, get_string('courseshort', 'gradeexport_xlsskema'));
-        $myxls->write_string(0, $pos++, get_string('groupidnum', 'gradeexport_xlsskema'));
         $myxls->write_string(0, $pos++, get_string('groupname', 'gradeexport_xlsskema'));
+        $myxls->write_string(0, $pos++, get_string('groupidnum', 'gradeexport_xlsskema'));
 
         // Print all the lines of data.
         $i = 0;
@@ -126,21 +124,23 @@ class grade_export_xlsskema extends grade_export {
             $myxls->write_string($i, $j++, time());
 
             // Resolve groupname
-
-            $myxls->write_string($i, $j++, $this->course->idnumber);
             $myxls->write_string($i, $j++, $this->course->shortname);
 
             // Search all the groups of the student for this course.
-            
             $groups = $DB->get_records('groups', ['courseid' => $this->course->id]);
             $usedgroups = [];
             foreach ($groups as $gid => $group){
+                // If the group is a manual group, ignore it
+                if(empty($group->idnumber)){
+                    unset($groups[$gid]);
+                    continue;
+                }
                 $members = $DB->get_records('groups_members', ['groupid' => $gid]);
+                // If the group has no members, ignore it
                 if(!$members){
                     unset($groups[$gid]);
                     continue;
                 }
-    
                 $group->members = [];
                 foreach ($members as $member){
                     $group->members[$member->userid] = $member->userid;
